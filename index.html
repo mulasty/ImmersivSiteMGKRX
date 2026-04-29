@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A responsive commerce operations interface for integrations, orders, automations, and live marketplace telemetry."
+    />
+    <title>Integration Singularity - Commerce Flight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+              mono: ["JetBrains Mono", "SFMono-Regular", "Consolas", "monospace"]
+            },
+            colors: {
+              ink: "#07090d",
+              panel: "#0d1119",
+              line: "rgba(255,255,255,.12)",
+              aqua: "#4ee7ff",
+              mint: "#7af7b1",
+              amber: "#ffc36b",
+              rose: "#ff6f9e"
+            },
+            boxShadow: {
+              glow: "0 0 42px rgba(78,231,255,.18)",
+              amber: "0 18px 55px rgba(255,195,107,.18)"
+            }
+          }
+        }
+      };
+    </script>
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #07090d;
+      }
+
+      body {
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(7, 9, 13, 0.2), #07090d 78%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 72px),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.027) 0 1px, transparent 1px 72px),
+          #07090d;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        background:
+          linear-gradient(90deg, rgba(7, 9, 13, 0.96), rgba(7, 9, 13, 0.68) 42%, rgba(7, 9, 13, 0.88)),
+          linear-gradient(145deg, rgba(78, 231, 255, 0.12), transparent 35%),
+          linear-gradient(315deg, rgba(255, 195, 107, 0.11), transparent 38%);
+        z-index: -2;
+      }
+
+      #field {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -3;
+      }
+
+      .glass {
+        background: linear-gradient(180deg, rgba(13, 17, 25, 0.82), rgba(13, 17, 25, 0.58));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(20px);
+      }
+
+      .scanline {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .scanline::after {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        background: linear-gradient(180deg, transparent, rgba(78, 231, 255, 0.08), transparent);
+        transform: translateY(-100%);
+        animation: scan 5.5s linear infinite;
+      }
+
+      .orbit-node {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 28px rgba(78, 231, 255, 0.32);
+        transform: translate(-50%, -50%);
+      }
+
+      .orbit-link {
+        transform-origin: left center;
+      }
+
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 700ms ease, transform 700ms ease;
+      }
+
+      .js .reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .nav-link.is-active {
+        color: #f8fafc;
+      }
+
+      .nav-link.is-active::after {
+        transform: scaleX(1);
+      }
+
+      .nav-link::after {
+        display: block;
+        width: 100%;
+        height: 1px;
+        margin-top: 0.35rem;
+        content: "";
+        background: linear-gradient(90deg, #4ee7ff, #ffc36b);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 200ms ease;
+      }
+
+      .metric-ring {
+        background:
+          conic-gradient(from 0deg, #4ee7ff var(--value), rgba(255, 255, 255, 0.11) 0),
+          radial-gradient(circle, #111722 0 58%, transparent 60%);
+      }
+
+      @keyframes scan {
+        to {
+          transform: translateY(100%);
+        }
+      }
+
+      @keyframes pulse-line {
+        0%,
+        100% {
+          opacity: 0.25;
+        }
+        50% {
+          opacity: 0.9;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="font-display text-slate-100 antialiased selection:bg-aqua/25 selection:text-white">
+    <canvas id="field" aria-hidden="true"></canvas>
+
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-aqua focus:px-4 focus:py-3 focus:text-sm focus:font-black focus:text-ink"
+    >
+      Skip to content
+    </a>
+
+    <div class="fixed left-0 top-0 z-50 h-1 w-full bg-white/10" aria-hidden="true">
+      <span id="progress" class="block h-full origin-left scale-x-0 bg-gradient-to-r from-aqua via-amber to-rose"></span>
+    </div>
+
+    <header class="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-ink/[0.72] backdrop-blur-xl">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+        <a href="#hero" class="group flex items-center gap-3" aria-label="Commerce Flight home">
+          <span class="grid h-9 w-9 place-items-center rounded-lg border border-aqua/[0.45] bg-aqua/10 text-sm font-black text-aqua shadow-glow">
+            CF
+          </span>
+          <span class="leading-none">
+            <span class="block text-sm font-black uppercase tracking-[0.16em] text-white">Commerce Flight</span>
+            <span class="mt-1 block text-xs text-slate-400">Integration Singularity</span>
+          </span>
+        </a>
+
+        <nav class="order-3 flex w-full items-center justify-between gap-3 text-sm text-slate-300 sm:order-2 sm:w-auto sm:justify-start sm:gap-6" aria-label="Primary navigation">
+          <a class="nav-link" href="#demo">Demo</a>
+          <a class="nav-link" href="#systems">Systems</a>
+          <a class="nav-link" href="#flow">Flow</a>
+          <a class="nav-link" href="#launch">Launch</a>
+        </nav>
+
+        <div class="order-2 flex items-center gap-2 sm:order-3" role="group" aria-label="Scene selector">
+          <button
+            class="scene-tab rounded-md border border-aqua/[0.45] bg-aqua px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-ink"
+            type="button"
+            data-scene="integrations"
+            aria-pressed="true"
+          >
+            Integrations
+          </button>
+          <button
+            class="scene-tab rounded-md border border-white/[0.12] bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-300"
+            type="button"
+            data-scene="orders"
+            aria-pressed="false"
+          >
+            Orders
+          </button>
+          <button
+            class="scene-tab hidden rounded-md border border-white/[0.12] bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-300 sm:inline-flex"
+            type="button"
+            data-scene="map"
+            aria-pressed="false"
+          >
+            Map
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="hero" class="relative mx-auto grid min-h-[92svh] max-w-7xl items-center gap-10 px-4 pb-12 pt-36 sm:px-6 lg:grid-cols-[1fr_.92fr] lg:px-8 lg:pt-32">
+        <div class="reveal max-w-3xl">
+          <p class="mb-5 inline-flex rounded-md border border-aqua/[0.35] bg-aqua/10 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-aqua">
+            Live commerce OS / spatial control
+          </p>
+          <h1 class="text-5xl font-black leading-none text-white sm:text-6xl lg:text-7xl">
+            Integration Singularity
+          </h1>
+          <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+            A cinematic command center where marketplaces, warehouse logic, payments, ERP and AI automations move as one measurable system.
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a
+              href="#demo"
+              class="inline-flex min-h-12 items-center justify-center rounded-md bg-aqua px-5 text-sm font-black uppercase tracking-[0.12em] text-ink shadow-glow transition hover:bg-mint focus:outline-none focus:ring-2 focus:ring-aqua focus:ring-offset-2 focus:ring-offset-ink"
+            >
+              Open demo
+            </a>
+            <a
+              href="#systems"
+              class="inline-flex min-h-12 items-center justify-center rounded-md border border-white/[0.15] bg-white/[0.06] px-5 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:border-amber/60 hover:bg-amber/10 focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 focus:ring-offset-ink"
+            >
+              View systems
+            </a>
+          </div>
+
+          <dl class="mt-10 grid max-w-2xl grid-cols-3 gap-3">
+            <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <dt class="text-xs uppercase tracking-[0.16em] text-slate-500">Sync</dt>
+              <dd class="mt-2 text-2xl font-black text-white sm:text-3xl">98.7%</dd>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <dt class="text-xs uppercase tracking-[0.16em] text-slate-500">Latency</dt>
+              <dd class="mt-2 text-2xl font-black text-white sm:text-3xl">41ms</dd>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <dt class="text-xs uppercase tracking-[0.16em] text-slate-500">Events</dt>
+              <dd class="mt-2 text-2xl font-black text-white sm:text-3xl">1.8M</dd>
+            </div>
+          </dl>
+        </div>
+
+        <section id="demo" class="reveal glass scanline rounded-lg p-4 shadow-glow sm:p-5" aria-labelledby="scene-title">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+            <div>
+              <p id="scene-kicker" class="text-xs font-black uppercase tracking-[0.18em] text-aqua">Integration mesh</p>
+              <h2 id="scene-title" class="mt-2 text-2xl font-black text-white sm:text-3xl">All channels orbit one source of truth</h2>
+            </div>
+            <div class="rounded-lg border border-mint/30 bg-mint/10 px-3 py-2 text-right">
+              <p class="text-xs uppercase tracking-[0.16em] text-slate-400">Health</p>
+              <p id="scene-health" class="font-mono text-xl font-black text-mint">99.99</p>
+            </div>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
+            <div class="relative min-h-[360px] rounded-lg border border-white/10 bg-ink/[0.70] p-4">
+              <div class="absolute left-4 right-4 top-4 flex items-center justify-between text-xs uppercase tracking-[0.16em] text-slate-500">
+                <span>Live orbit</span>
+                <span id="orbit-status" class="text-aqua">Stable</span>
+              </div>
+
+              <div class="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-aqua/25 bg-aqua/5"></div>
+              <div class="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-amber/[0.18]"></div>
+              <div class="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/[0.15] bg-white/[0.08] p-3 text-center shadow-glow">
+                <span class="block text-xs uppercase tracking-[0.14em] text-slate-400">Core</span>
+                <span class="mt-2 block text-xl font-black text-white">OS</span>
+                <span class="mt-1 block font-mono text-xs text-aqua">00.041s</span>
+              </div>
+
+              <div id="orbit-links" aria-hidden="true"></div>
+              <div id="orbit-nodes" aria-hidden="true"></div>
+            </div>
+
+            <div class="grid gap-4">
+              <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Throughput</p>
+                    <p id="throughput" class="mt-2 text-4xl font-black text-white">42k</p>
+                  </div>
+                  <div class="metric-ring grid h-20 w-20 place-items-center rounded-lg" style="--value: 86%">
+                    <span id="metric-percent" class="font-mono text-sm font-black text-aqua">86%</span>
+                  </div>
+                </div>
+                <p id="scene-copy" class="mt-4 text-sm leading-6 text-slate-300">
+                  Product data, inventory and price rules are reconciled before each channel receives the next clean state.
+                </p>
+              </div>
+
+              <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Active route</p>
+                <ol id="route-list" class="mt-4 space-y-3 text-sm text-slate-300"></ol>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="systems" class="border-y border-white/10 bg-white/[0.03] py-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="reveal max-w-2xl">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-amber">Operational surface</p>
+            <h2 class="mt-4 text-4xl font-black leading-tight text-white sm:text-5xl">Dense signals, calm decisions.</h2>
+            <p class="mt-5 text-lg leading-8 text-slate-300">
+              The interface is built for operators who need to compare state, act quickly and trust that automation is visible.
+            </p>
+          </div>
+
+          <div class="mt-10 grid gap-4 md:grid-cols-3">
+            <article class="reveal rounded-lg border border-white/10 bg-panel/70 p-5">
+              <p class="font-mono text-sm text-aqua">01</p>
+              <h3 class="mt-6 text-2xl font-black text-white">Unified catalog</h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">Normalization, channel rules, translations and media QA in one compact workspace.</p>
+              <div class="mt-6 h-2 rounded-md bg-white/10">
+                <div class="h-2 w-[88%] rounded-md bg-aqua"></div>
+              </div>
+            </article>
+            <article class="reveal rounded-lg border border-white/10 bg-panel/70 p-5">
+              <p class="font-mono text-sm text-amber">02</p>
+              <h3 class="mt-6 text-2xl font-black text-white">Order theatre</h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">Every payment, label, pick wave and exception is mapped to a visible state transition.</p>
+              <div class="mt-6 h-2 rounded-md bg-white/10">
+                <div class="h-2 w-[72%] rounded-md bg-amber"></div>
+              </div>
+            </article>
+            <article class="reveal rounded-lg border border-white/10 bg-panel/70 p-5">
+              <p class="font-mono text-sm text-rose">03</p>
+              <h3 class="mt-6 text-2xl font-black text-white">AI supervision</h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">Recommendations are ranked, logged and ready for human approval before deployment.</p>
+              <div class="mt-6 h-2 rounded-md bg-white/10">
+                <div class="h-2 w-[64%] rounded-md bg-rose"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="flow" class="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[.82fr_1fr] lg:px-8">
+        <div class="reveal">
+          <p class="text-xs font-black uppercase tracking-[0.18em] text-mint">Fulfilment pulse</p>
+          <h2 class="mt-4 text-4xl font-black leading-tight text-white sm:text-5xl">A pipeline that feels alive without becoming noisy.</h2>
+          <p class="mt-5 text-lg leading-8 text-slate-300">
+            Each step exposes only the controls needed for the next action: approve, reroute, enrich, release or escalate.
+          </p>
+        </div>
+
+        <div class="reveal grid gap-3">
+          <button class="flow-step rounded-lg border border-aqua/[0.35] bg-aqua/10 p-4 text-left" type="button" data-step="0" aria-pressed="true">
+            <span class="flex items-center justify-between gap-4">
+              <span class="text-sm font-black uppercase tracking-[0.16em] text-aqua">Captured</span>
+              <span class="font-mono text-sm text-slate-400">2,408 orders</span>
+            </span>
+            <span class="mt-3 block text-lg font-black text-white">Marketplace events enter the validation lane.</span>
+          </button>
+          <button class="flow-step rounded-lg border border-white/10 bg-white/[0.04] p-4 text-left" type="button" data-step="1" aria-pressed="false">
+            <span class="flex items-center justify-between gap-4">
+              <span class="text-sm font-black uppercase tracking-[0.16em] text-amber">Resolved</span>
+              <span class="font-mono text-sm text-slate-400">317 exceptions</span>
+            </span>
+            <span class="mt-3 block text-lg font-black text-white">ERP, WMS and payment state converge.</span>
+          </button>
+          <button class="flow-step rounded-lg border border-white/10 bg-white/[0.04] p-4 text-left" type="button" data-step="2" aria-pressed="false">
+            <span class="flex items-center justify-between gap-4">
+              <span class="text-sm font-black uppercase tracking-[0.16em] text-mint">Released</span>
+              <span class="font-mono text-sm text-slate-400">96.2% SLA</span>
+            </span>
+            <span class="mt-3 block text-lg font-black text-white">Labels, invoices and notifications leave as one batch.</span>
+          </button>
+
+          <div class="rounded-lg border border-white/10 bg-panel/80 p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Operator note</p>
+            <p id="operator-note" class="mt-3 text-lg leading-8 text-slate-200">
+              Validation is clean. AI marked 42 listings for price review before the morning marketplace sync.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="launch" class="border-t border-white/10 bg-white/[0.03] py-20">
+        <div class="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_.78fr] lg:px-8">
+          <div class="reveal">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-rose">Premium product demo</p>
+            <h2 class="mt-4 text-4xl font-black leading-tight text-white sm:text-5xl">Make commerce operations look as advanced as they are.</h2>
+          </div>
+          <form class="reveal rounded-lg border border-white/10 bg-panel/80 p-5" aria-label="Demo request form">
+            <label class="block text-sm font-bold text-slate-200" for="email">Work email</label>
+            <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="hello@example.com"
+                class="min-h-12 flex-1 rounded-md border border-white/[0.12] bg-ink px-4 text-white outline-none transition placeholder:text-slate-600 focus:border-aqua focus:ring-2 focus:ring-aqua/30"
+              />
+              <button
+                class="min-h-12 rounded-md bg-amber px-5 text-sm font-black uppercase tracking-[0.12em] text-ink shadow-amber transition hover:bg-mint focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 focus:ring-offset-ink"
+                type="submit"
+              >
+                Request access
+              </button>
+            </div>
+            <p id="form-status" class="mt-3 min-h-6 text-sm text-slate-400" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+__pycache__/
+dist/
+coverage/
+artifacts/
+*.joblib
+*.log
+dev-check*.png
+
+.vercel
